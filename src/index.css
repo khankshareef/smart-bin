@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* Sidebar Notch Design */
+.active-item-notch {
+  position: relative;
+  background-color: #f8fdff; /* This MUST match your Main Content BG color */
+  color: #0062a0 !important;
+  border-radius: 40px 0 0 40px; /* Rounded left side */
+  margin-left: 10px; /* Pulls it slightly away from the left edge */
+  transition: all 0.3s ease-in-out;
+}
+
+/* The Top Inverted Curve */
+.active-item-notch::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  border-radius: 50%;
+  box-shadow: 10px 10px 0 #f8fdff; /* Creates the cut-out look */
+  pointer-events: none;
+}
+
+/* The Bottom Inverted Curve */
+.active-item-notch::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  border-radius: 50%;
+  box-shadow: 10px -10px 0 #f8fdff; /* Creates the cut-out look */
+  pointer-events: none;
+}
+
+/* Hide scrollbar but allow scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

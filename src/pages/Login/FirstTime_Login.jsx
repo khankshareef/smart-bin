@@ -11,7 +11,7 @@ import AuthLayout from './AuthLayout';
 const FirstTime_Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [passwordData, setPasswordData] = useState({ 
+  const[passwordData, setPasswordData] = useState({ 
     currentPassword: '', 
     newPassword: '', 
     confirmPassword: '' 
@@ -20,7 +20,6 @@ const FirstTime_Login = () => {
   const [popup, setPopup] = useState({ success: false, error: false, message: '' });
 
   useEffect(() => {
-    // Note: Ensure this matches the key set in your Login component (e.g., 'temp_login_email')
     const storedEmail = localStorage.getItem('email') || localStorage.getItem('temp_login_email');
     if (storedEmail) {
       setEmail(storedEmail);
@@ -35,10 +34,10 @@ const FirstTime_Login = () => {
         setPopup((prev) => ({ ...prev, success: false }));
         localStorage.clear();
         navigate('/login');
-      }, 2500); // Slightly longer to allow the user to read the backend message
+      }, 2500); 
       return () => clearTimeout(timer);
     }
-  }, [popup.success, navigate]);
+  },[popup.success, navigate]);
 
   const handleUpdatePassword = async (e) => {
     if (e) e.preventDefault();
@@ -56,11 +55,10 @@ const FirstTime_Login = () => {
         newPassword: passwordData.newPassword
       });
       
-      // --- EXTRACT SUCCESS MESSAGE FROM BACKEND ---
-      // Matches path: res.data.data.message
       const successMsg = 
         res?.data?.data?.message || 
         res?.data?.message || 
+        res?.message ||
         "Your password has been updated. Please login.";
 
       setPopup({ 
@@ -72,12 +70,12 @@ const FirstTime_Login = () => {
     } catch (error) {
       console.error("Password Change Error:", error);
 
-      // --- EXTRACT ERROR MESSAGE FROM BACKEND ---
-      // Matches path: error.response.data.data.message
       const errorMessage = 
-        error.response?.data?.data?.message || 
-        error.response?.data?.message || 
-        error.message || 
+        error?.response?.data?.data?.message || 
+        error?.response?.data?.message || 
+        error?.data?.data?.message || 
+        error?.data?.message || 
+        error?.message || 
         "Failed to update password.";
 
       setPopup({ 
@@ -140,7 +138,7 @@ const FirstTime_Login = () => {
         </Button>
       </form>
 
-      {/* Success Popup handles redirection and cleanup */}
+      {/* Popups */}
       <Success_Popup 
         isOpen={popup.success} 
         onClose={() => { 

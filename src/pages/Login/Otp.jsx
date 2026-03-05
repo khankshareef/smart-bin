@@ -11,7 +11,7 @@ import AuthLayout from './AuthLayout';
 const Otp = () => {
   const navigate = useNavigate();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [email, setEmail] = useState('');
+  const[email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef([]);
   const [showLoader, setShowLoader] = useState(false);
@@ -20,7 +20,7 @@ const Otp = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const[showError, setShowError] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
+  const[isFirstTimeUser, setIsFirstTimeUser] = useState(false);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('temp_login_email');
@@ -31,7 +31,6 @@ const Otp = () => {
     }
   }, [navigate]);
 
-  // --- MODIFIED: Accepts an optional OTP string to handle auto-submit immediately ---
   const handleSubmit = async (e, autoSubmitOtp = null) => {
     if (e) e.preventDefault();
     const otpValue = autoSubmitOtp || otp.join('');
@@ -54,9 +53,10 @@ const Otp = () => {
       const successMsg = 
         response?.data?.data?.message || 
         response?.data?.message || 
+        response?.message ||
         "Verification successful!";
 
-      const apiData = response?.data?.data || response?.data;
+      const apiData = response?.data?.data || response?.data || response;
 
       if (apiData?.accessToken) {
         localStorage.setItem('accessToken', apiData.accessToken);
@@ -67,7 +67,6 @@ const Otp = () => {
       setPopupMessage(successMsg);
       setShowSuccess(true);
 
-      // After short popup delay → show loader
       setTimeout(() => {
         setShowSuccess(false);
         setShowLoader(true);
@@ -79,21 +78,22 @@ const Otp = () => {
       console.error("Verification Error:", error);
       
       const errorMessage = 
-        error.response?.data?.data?.message || 
-        error.response?.data?.message || 
-        error.message || 
+        error?.response?.data?.data?.message || 
+        error?.response?.data?.message || 
+        error?.data?.data?.message || 
+        error?.data?.message || 
+        error?.message || 
         "Invalid OTP. Please try again.";
 
       setPopupMessage(errorMessage);
       setShowError(true);
-      setOtp(['', '', '', '', '', '']); // Optional: Clear OTP on error
-      inputRefs.current[0].focus(); // Optional: Refocus first input
+      setOtp(['', '', '', '', '', '']); 
+      inputRefs.current[0].focus(); 
     } finally {
       setLoading(false);
     }
   };
 
-  // --- MODIFIED: Auto-submit check added ---
   const handleChange = (value, index) => {
     if (isNaN(value)) return;
     
@@ -101,39 +101,31 @@ const Otp = () => {
     newOtp[index] = value.substring(value.length - 1); 
     setOtp(newOtp);
     
-    // Focus next input
     if (value && index < 5) {
       inputRefs.current[index + 1].focus();
     }
 
-    // Auto-Process if all 6 digits are filled
     const currentOtpString = newOtp.join('');
     if (currentOtpString.length === 6 && !loading) {
       handleSubmit(null, currentOtpString);
     }
   };
 
-  // --- NEW: Paste functionality ---
   const handlePaste = (e) => {
     e.preventDefault();
-    // Get pasted data, strip non-digits, and trim to max 6 characters
     const pasteData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     
     if (pasteData) {
       const newOtp = [...otp];
-      
-      // Populate array with pasted digits
       for (let i = 0; i < 6; i++) {
         newOtp[i] = pasteData[i] || '';
       }
       setOtp(newOtp);
 
-      // Auto-submit if exactly 6 digits were pasted
       if (pasteData.length === 6 && !loading) {
-        inputRefs.current[5].blur(); // Remove focus
+        inputRefs.current[5].blur(); 
         handleSubmit(null, pasteData);
       } else {
-        // Focus the next empty input box
         const nextEmptyIndex = pasteData.length < 6 ? pasteData.length : 5;
         inputRefs.current[nextEmptyIndex].focus();
       }
@@ -159,20 +151,6 @@ const Otp = () => {
       return () => clearTimeout(timer);
     }
   }, [showLoader, isFirstTimeUser, navigate]);
-
-  useEffect(() => {
-    if (showSuccess) {
-      const timer = setTimeout(() => {
-        setShowSuccess(false);
-        if (isFirstTimeUser) {
-          navigate('first-time-login'); 
-        } else {
-          navigate('/dashboard'); 
-        }
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess, isFirstTimeUser, navigate]);
 
   return (
     <AuthLayout title="Verify OTP" subtitle={`We've sent a 6-digit code to ${email}`}>
@@ -201,9 +179,9 @@ const Otp = () => {
               value={digit}
               onChange={(e) => handleChange(e.target.value, i)}
               onKeyDown={(e) => handleKeyDown(e, i)}
-              onPaste={handlePaste} // --- NEW: Added Paste Event Handler ---
+              onPaste={handlePaste} 
               className="w-full h-12 sm:h-16 text-center text-2xl font-bold bg-blue-50/50 border-2 border-slate-200 rounded-2xl focus:border-[#0062a0] focus:ring-4 focus:ring-blue-100 outline-none transition-all"
-              disabled={loading} // Prevent typing while verifying
+              disabled={loading} 
             />
           ))}
         </div>

@@ -1,54 +1,77 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReUsableInput_Fields from '../../component/ReUsableInput_Fields/ReUsableInput_Fields';
 import Button from '../../component/button/Buttons';
 import { loginAPI } from '../../service/Login/Login';
 import AuthLayout from './AuthLayout';
-// Import the Error Popup
+// Import Popups
 import ErrorMessage_Popup from '../../component/Popup_Models/ErrorMessage_Popup';
+import Success_Popup from '../../component/Popup_Models/Success_Popup';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ loginEmail: '', loginPassword: '' });
-  const [loading, setLoading] = useState(false);
+  const[formData, setFormData] = useState({ loginEmail: '', loginPassword: '' });
+  const[loading, setLoading] = useState(false);
 
   // --- POPUP STATE ---
   const [showError, setShowError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const[showSuccess, setShowSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [redirectPath, setRedirectPath] = useState('');
+
+  // Auto-navigate after showing success confirmation
+  useEffect(() => {
+    if (showSuccess && redirectPath) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+        navigate(redirectPath);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, redirectPath, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      console.log("Sending Login Payload:", formData);
-
       const response = await loginAPI(formData);
       
       // Save email for OTP verification
       localStorage.setItem('temp_login_email', formData.loginEmail);
 
-      const apiData = response?.data?.data || response?.data; 
+      const apiData = response?.data?.data || response?.data || response; 
+      
+      // Extract success message
+      const successMessage = 
+        response?.data?.data?.message || 
+        response?.data?.message || 
+        response?.message ||
+        "Login successful!";
+
+      setSuccessMsg(successMessage);
+      setShowSuccess(true);
 
       if (apiData?.isFirstLogin === true) {
-        navigate('first-time-login'); 
+        setRedirectPath('first-time-login'); 
       } else {
-        navigate('otp'); 
+        setRedirectPath('otp'); 
       }
     } catch (error) {
       console.error("Login Error Object:", error);
       
-      // --- UPDATED ERROR EXTRACTION LOGIC ---
-      // 1. Check for your specific structure: error.response.data.data.message
-      // 2. Fallback to standard Axios error message
-      // 3. Fallback to hardcoded string
+      // --- ROBUST ERROR EXTRACTION ---
+      // Checks for Axios format AND direct Fetch/JSON throw format
       const errorMessage = 
-        error.response?.data?.data?.message || 
-        error.response?.data?.message || 
-        error.message || 
-        "Something went wrong";
+        error?.response?.data?.data?.message || 
+        error?.response?.data?.message || 
+        error?.data?.data?.message || 
+        error?.data?.message || 
+        error?.message || 
+        "Invalid email or password";
       
-      // --- SHOW POPUP ---
+      // Show Error Popup
       setErrorMsg(errorMessage);
       setShowError(true);
       
@@ -100,6 +123,13 @@ const Login = () => {
           {loading ? 'Signing In...' : 'Sign In'}
         </Button>
       </form>
+
+      {/* --- SUCCESS POPUP COMPONENT --- */}
+      <Success_Popup 
+        isOpen={showSuccess} 
+        onClose={() => setShowSuccess(false)} 
+        message={successMsg}
+      />
 
       {/* --- ERROR POPUP COMPONENT --- */}
       <ErrorMessage_Popup 

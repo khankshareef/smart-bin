@@ -2,29 +2,25 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ErrorMessage_Popup from '../../component/Popup_Models/ErrorMessage_Popup';
+import Success_Popup from '../../component/Popup_Models/Success_Popup';
 import ReUsableInput_Fields from '../../component/ReUsableInput_Fields/ReUsableInput_Fields';
 import Button from '../../component/button/Buttons';
 import { Forgot_Change_Password } from '../../service/Login/Login';
 import AuthLayout from './AuthLayout';
-// Import Popups
-import ErrorMessage_Popup from '../../component/Popup_Models/ErrorMessage_Popup';
-import Success_Popup from '../../component/Popup_Models/Success_Popup';
 
 const Forgot_PasswordSet = () => {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
+  const[email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const[newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const[loading, setLoading] = useState(false);
 
-  // --- POPUP STATE ---
   const [popup, setPopup] = useState({ success: false, error: false, message: '' });
 
-  // Get email from localStorage
   useEffect(() => {
-    // Check for both possible keys based on your other components
     const savedEmail = localStorage.getItem('email') || localStorage.getItem('temp_login_email');
 
     if (savedEmail) {
@@ -35,12 +31,10 @@ const Forgot_PasswordSet = () => {
         error: true, 
         message: 'Session expired. Please enter your email again.' 
       });
-      // Delay navigation to let user read the error
       setTimeout(() => navigate('/forgot-password'), 2000);
     }
-  }, [navigate]);
+  },[navigate]);
 
-  // Handle auto-navigation on success
   useEffect(() => {
     if (popup.success) {
       const timer = setTimeout(() => {
@@ -51,7 +45,7 @@ const Forgot_PasswordSet = () => {
       }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [popup.success, navigate]);
+  },[popup.success, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,11 +71,10 @@ const Forgot_PasswordSet = () => {
 
       const response = await Forgot_Change_Password(payload);
 
-      // --- EXTRACT SUCCESS MESSAGE ---
-      // Matches path: response.data.data.message
       const successMsg = 
         response?.data?.data?.message || 
         response?.data?.message || 
+        response?.message ||
         'Password changed successfully!';
 
       setPopup({ 
@@ -93,11 +86,11 @@ const Forgot_PasswordSet = () => {
     } catch (error) {
       console.error('Reset password error:', error);
 
-      // --- EXTRACT ERROR MESSAGE ---
-      // Matches path: error.response.data.data.message
       const errorMessage = 
         error?.response?.data?.data?.message || 
         error?.response?.data?.message ||
+        error?.data?.data?.message || 
+        error?.data?.message || 
         error?.message ||
         'Invalid OTP or request failed.';
 

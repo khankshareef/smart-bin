@@ -1,22 +1,36 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, KeyRound } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReUsableInput_Fields from '../../component/ReUsableInput_Fields/ReUsableInput_Fields';
 import Button from '../../component/button/Buttons';
 import { Forgot_password } from '../../service/Login/Login';
 import AuthLayout from './AuthLayout';
-// Import the Error Popup
+// Import Popups
 import ErrorMessage_Popup from '../../component/Popup_Models/ErrorMessage_Popup';
+import Success_Popup from '../../component/Popup_Models/Success_Popup';
 
 const Forgot_Password = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const[email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   // --- POPUP STATE ---
   const [showError, setShowError] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const[errorMsg, setErrorMsg] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // Auto-navigate after showing success confirmation
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+        navigate('../forgot-change-password');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,18 +41,27 @@ const Forgot_Password = () => {
       const payload = { loginEmail: email }; 
       const response = await Forgot_password(payload);
       
-      // If success, navigate to the password change screen
-      navigate('../forgot-change-password');
+      // --- EXTRACT SUCCESS MESSAGE ---
+      const successMessage = 
+        response?.data?.data?.message || 
+        response?.data?.message || 
+        response?.message ||
+        "Reset link sent successfully!";
+        
+      setSuccessMsg(successMessage);
+      setShowSuccess(true);
       
     } catch (error) {
       console.error("Forgot Password Error:", error);
       
-      // --- EXTRACT NESTED MESSAGE ---
-      // Path: error.response.data.data.message
+      // --- EXTRACT NESTED ERROR MESSAGE ---
+      // Checks for Axios format AND direct Fetch/JSON throw format
       const errorMessage = 
-        error.response?.data?.data?.message || 
-        error.response?.data?.message || 
-        error.message || 
+        error?.response?.data?.data?.message || 
+        error?.response?.data?.message || 
+        error?.data?.data?.message || 
+        error?.data?.message || 
+        error?.message || 
         "Email not found or server error";
 
       // --- SHOW POPUP ---
@@ -92,6 +115,13 @@ const Forgot_Password = () => {
           Back to Login
         </button>
       </motion.form>
+
+      {/* --- SUCCESS POPUP COMPONENT --- */}
+      <Success_Popup 
+        isOpen={showSuccess} 
+        onClose={() => setShowSuccess(false)} 
+        message={successMsg}
+      />
 
       {/* --- ERROR POPUP COMPONENT --- */}
       <ErrorMessage_Popup 
